@@ -1,0 +1,8 @@
+requests
+numpy
+apscheduler
+websocket
+pymitter
+scipy
+matplotlib
+pyyaml

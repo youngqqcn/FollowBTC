@@ -1,0 +1,66 @@
+
+HTDF/USDT:
+  #基础配置
+  envpath: prj_pro_htdfusdt.yml                                 #het链接文件
+  AmountPrecision: 3                                   #数量精度
+  PricePrecision: 5                                    #价格精度
+#  tradesymbol: HTDF/USDT                                    #usdp币对
+  tradesymbol: htdfusdt                                    #usdp币对
+  maxpricerate: 0.05                                   #与上一笔比较超过这个值就不跟随
+#  Flwsymbol: BTC-USDT                                   #跟随计价币
+#  FlwExchange: Okex                                   #跟随交易所 Okex HuoBi  Het
+  Flwsymbol: btcusdt                                   #跟随计价币
+  FlwExchange: HuoBi                                   #跟随交易所 Okex HuoBi  Het
+
+  FlwMul: 1.2                                            #跟随涨跌幅倍率系数
+  period: day
+  FlwVolMul: 20.0  # 跟随成交量倍率系数
+
+  this_symbol: HTDF/USDT    # 当前币对名称
+  # 风控相关（这些参数是新增的，还没上线，可以不写）
+  HighPrice: 1
+  LowPrice: 0.05
+  trade_coin_asset_alarm: 0.999
+  base_coin_asset_alarm: 0.1
+  init_asset_trade_coin: 10000
+  init_asset_base_coin: 10000
+  phone_number: '18273664901,18138857721,18565659593'   # 接受信息手机号
+  phone_text_tpl_id: '213111'   # 手机短信模板
+  phone_text_key: '315654922d9b6849cdf5e6bb2a23542c'   # 手机短信 APPKEY
+#  phone_voice_tpl_id: ''    # 语音提醒模板
+  # 监控开关（1打开，0关闭）
+  low_volume_trade_alarm: 0   # 低量成交监控
+  low_volume_trade_value: 3    # 低量成交监控值，小于该值，则发送预警
+  over_price_space_alarm: 1    # 价格超过最高价和最低价监控
+  price_amplitude_alarm: 0    # 行情振幅监控
+  price_amplitude_value: 5    # 行情振幅监控值，百分比，值为5则监控5%
+  trade_record_alarm: 1   # 无成交记录监控
+  trade_record_alarm_time_scale: 600   # 监控时间尺度，单位秒，当超过10秒钟无成交记录时，发送预警
+  current_asset_alarm: 1    # 实时资金监控
+  depth_one_two_price_alarm: 1    # 深度数据，1、2档价格监控
+  depth_one_two_price_value: 3    # 深度数据，1、2档价格监控值，倍数关系
+  low_volume_order_alarm: 0      # 低量小单挂单监控
+  low_volume_order_value: 1   # 低量小单挂单监控值
+  huge_quantity_order_alarm: 1    # 巨量挂单监控
+  huge_quantity_order: 50000   # 巨量单阈值，单位是金额（USDP）
+  alarm_sleep_time: 600    # 监控每轮睡眠时间，单位秒
+
+  orderbook:
+    IsOpen: 1                                          #是否打开挂单功能 1为是 0为否
+    delay: 0.5                                           #铺单撤单间隔
+    order_amount_min: 150                                 #最小下单量
+    order_amount_max: 400                               #最大下单量
+    Rg: 0.07                                            #挂单价格范围
+    ordernum: 30                                         #挂单数量
+    akey: 'a2db7ea089fed50d541555127d643d0a'            #公钥
+    skey: '6db88c3d1bdae5e3e7336a115b1272a0'            #私钥
+  klinetrend:
+    IsOpen: 1                                        #是否打开跟随走势功能 1为是 0为否
+    order_amount_min: 150                              #最小下单量
+    order_amount_max: 500                             #最大下单量
+    delay: 0.5                                         #吃单间隔
+    amountmul: 2                                    #当当前涨跌幅与目标涨跌幅相差一定的时候，数量倍数系数
+    rt: 0.1                                          #当当前涨跌幅与目标涨跌幅相差这个数的时候，数量倍数系数
+    order_num_min: 10                                 #最小下单笔数
+    order_num_max: 20                                 #最大下单笔数
+
