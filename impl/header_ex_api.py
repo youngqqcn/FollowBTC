@@ -58,6 +58,8 @@ class OKEX(object):
                 granularity = int(period[:-1])*60*60
             elif period == 'day':
                 granularity = 60*60*24
+            else:
+                granularity = 60 * 60 * 24
             params = {'granularity': granularity,'instrument_id':symbol.upper()}
             path = OK_API_URL + '/api/spot/v3/products/'+symbol.upper()+'/candles'
             # path = OK_API_URL + '/api/spot/v3/instruments/'+symbol.upper()+'/candles'

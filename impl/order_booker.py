@@ -1,8 +1,8 @@
 #!coding:utf8
 
 #author:yqq
-#date:2020/9/17 0017 18:37
-#description:
+#date:2021/06/15
+#description: Bione 机器人
 import datetime
 import random,time
 import numpy as np 
@@ -13,7 +13,7 @@ from multiprocessing import Process, cpu_count
 
 from impl.header_ex_api import HuoBi, OKEX
 from impl.sms import juhe_cn_send_sms
-from sdks.tokencan import TokenCanWrapper
+from sdks.bione import BioneWrapper
 from utils import round_down_float_all
 from concurrent.futures import ProcessPoolExecutor,  ALL_COMPLETED
 
@@ -58,7 +58,7 @@ class OrderBooker:
         self.phone_text_tpl_id = conf[symbol]['phone_text_tpl_id']
         self.phone_text_key = conf[symbol]['phone_text_key']
 
-        self.tc = TokenCanWrapper(akey=self.akey, skey=self.skey)
+        self.wrapper = BioneWrapper(akey=self.akey, skey=self.skey)
 
         self.hb = HuoBi()
         self.okex = OKEX()
@@ -73,11 +73,13 @@ class OrderBooker:
         if len(orders) == 0: return  []
 
         ret = []
-        trade_func =  self.tc.buy_in_limit_price if side == TradeSide.BUY else self.tc.sell_in_limit_price
         for ord in orders:
             try:
                 print('下{}单数据:{}'.format(side, ord))
-                o_b = trade_func(self.tradesymbol, ord[0], ord[1])
+                if side == TradeSide.BUY:
+                    o_b = self.wrapper.buy_in_limit_price(self.tradesymbol, ord[0], ord[1])
+                else:
+                    o_b = self.wrapper.sell_in_limit_price(self.tradesymbol, ord[0], ord[1])
                 ret.append(o_b)
             except Exception as e:
                 print('下单错误:{}, order:{}'.format(e, ord))
@@ -97,7 +99,7 @@ class OrderBooker:
                 if T_rate <= -1:
                     # Logging.info(tradesymbol+' 得到目标价错误')
                     raise Exception(self.tradesymbol+' 得到目标价错误')
-                ticker = self.tc.get_ticker(symbol=self.tradesymbol)
+                ticker = self.wrapper.get_ticker(symbol=self.tradesymbol)
                 nowprice = ticker['last']
                 return (float(nowprice) * (1 + self.FlwMul * T_rate))
             elif self.FlwExchange == 'HuoBi':
@@ -108,7 +110,7 @@ class OrderBooker:
                     raise Exception(self.tradesymbol+' 得到目标价错误')
 
                 # 昨天的收盘价作为今天基准价
-                open_price = self.tc.get_base_price(symbol=self.tradesymbol, period=self.period)
+                open_price = self.wrapper.get_base_price(symbol=self.tradesymbol, period=self.period)
                 return (float(open_price) * (1 + self.FlwMul * T_rate))
             else:
                 raise Exception("未知交易所 FlwExchange : {0}".format(self.FlwExchange))
@@ -156,8 +158,8 @@ class OrderBooker:
     def cancel_timeout_orders(self, ord_lifetime_secs: int, per_op_delay: float, page_size: int=100):
         o_ids = []
         nowtime = int(time.time())
-        assert isinstance(self.tc, TokenCanWrapper), 'tc is not  TokenCanWrapper'
-        orders = self.tc.get_orders(self.tradesymbol, page_size=page_size)
+        assert isinstance(self.wrapper, BioneWrapper), 'tc is not  BioneWrapper'
+        orders = self.wrapper.get_orders(self.tradesymbol, page_size=page_size)
         # print("订单笔数: {}".format( len(orders)) )
 
         if len(orders) < 50:
@@ -184,7 +186,7 @@ class OrderBooker:
         for i in range(len(this_symbol_orders)):
             order_id = this_symbol_orders[i]['id']
             try:
-                rsp = self.tc.cancel_order(self.tradesymbol, order_id)
+                rsp = self.wrapper.cancel_order(self.tradesymbol, order_id)
                 logging.info("撤单结果：{}\n撤单信息：{}".format(rsp, order_id))
                 time.sleep(per_op_delay)
                 count += 1
@@ -257,12 +259,12 @@ class OrderBooker:
                         continue
 
                 last_sms_time = 0
-                balances = self.tc.get_account_balance(symbols=['htdf', 'usdt'])
+                balances = self.wrapper.get_account_balance(symbols=['htdf', 'usdt'])
                 assert len(balances) == 2, 'balances length is not equals 2'
 
-                htdf_normal_balance = int(float(balances['htdf']['normal']))
+                htdf_normal_balance = int(float(balances['htdf']['free']))
                 htdf_locked_balance = int(float(balances['htdf']['locked']))
-                usdt_normal_balance = int(float(balances['usdt']['normal']))
+                usdt_normal_balance = int(float(balances['usdt']['free']))
                 usdt_locked_balance = int(float(balances['usdt']['locked']))
 
                 params = {
@@ -270,7 +272,7 @@ class OrderBooker:
                     "tpl_id": self.phone_text_tpl_id,
                     "key": self.phone_text_key
                 }
-                name = '\n【{} 资金监控】\n'.format('T網机器人')
+                name = '\n【{} 资金监控】\n'.format('BIONE机器人')
                 content = 'H普通余额为{}，冻结余额为{}；U普通余额为{}，冻结余额为{}，{}。' \
                     .format(htdf_normal_balance, htdf_locked_balance,
                             usdt_normal_balance, usdt_locked_balance, datetime.datetime.now())
@@ -292,7 +294,7 @@ class OrderBooker:
         """
 
         # 撤销所有订单
-        ### self.tc.cancel_all_orders( symbol=self.tradesymbol )
+        ### self.wrapper.cancel_all_orders( symbol=self.tradesymbol )
 
 
         # 撤单进程

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="1dc5596d-4bb8-4f6e-9ce2-3152821da1b8" name="robot">
+        <fileTransfer rootFolder="/data/bione" accessType="SFTP" host="161.117.36.227" port="52113" sshConfigId="7e9663d7-7326-4417-a56c-3c24f22b3ba8" sshConfig="root@161.117.36.227:52113 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

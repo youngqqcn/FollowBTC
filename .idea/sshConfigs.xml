@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig host="161.117.36.227" id="7e9663d7-7326-4417-a56c-3c24f22b3ba8" keyPath="$PROJECT_DIR$/../hetbi-style.pem" port="52113" nameFormat="DESCRIPTIVE" username="root" />
+    </configs>
+  </component>
+</project>

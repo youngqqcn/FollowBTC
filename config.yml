@@ -2,10 +2,10 @@
 HTDF/USDT:
   #基础配置
   envpath: prj_pro_htdfusdt.yml                                 #het链接文件
-  AmountPrecision: 3                                   #数量精度
-  PricePrecision: 5                                    #价格精度
+  AmountPrecision: 2                                   #数量精度
+  PricePrecision: 6                                    #价格精度
 #  tradesymbol: HTDF/USDT                                    #usdp币对
-  tradesymbol: htdfusdt                                    #usdp币对
+  tradesymbol: HTDFUSDT                                    #usdp币对
   maxpricerate: 0.05                                   #与上一笔比较超过这个值就不跟随
 #  Flwsymbol: BTC-USDT                                   #跟随计价币
 #  FlwExchange: Okex                                   #跟随交易所 Okex HuoBi  Het
@@ -52,8 +52,8 @@ HTDF/USDT:
     order_amount_max: 400                               #最大下单量
     Rg: 0.07                                            #挂单价格范围
     ordernum: 30                                         #挂单数量
-    akey: 'a2db7ea089fed50d541555127d643d0a'            #公钥
-    skey: '6db88c3d1bdae5e3e7336a115b1272a0'            #私钥
+    akey: 'bf1d0ab922e59da3d17832270fc6f943'            #公钥
+    skey: '45d38dc317e7b55bb7847ab54bf96011'            #私钥
   klinetrend:
     IsOpen: 1                                        #是否打开跟随走势功能 1为是 0为否
     order_amount_min: 150                              #最小下单量

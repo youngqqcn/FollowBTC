@@ -1,7 +1,8 @@
 #!coding:utf8
 
 #author:yqq
-#date:2020/9/17 0017 18:37
+#date:2021/06/15
+#description: Bione 机器人
 #description: K线
 
 
@@ -12,7 +13,6 @@ import copy
 from .header_ex_api import OKEX, HuoBi
 from utils import round_down_float_all
 from .order_booker import OrderBooker, TradeSide
-
 
 
 class TakingSide:
@@ -50,7 +50,7 @@ class KlineTrader(OrderBooker):
                 if T_rate <= -1:
                     # Logging.info(tradesymbol+' 得到目标价错误')
                     raise Exception(self.tradesymbol + ' 得到目标价错误')
-                ticker = self.tc.get_ticker(symbol=self.tradesymbol)
+                ticker = self.wrapper.get_ticker(symbol=self.tradesymbol)
                 nowprice = ticker['last']
                 return (float(nowprice) * (1 + self.FlwMul * T_rate)), volume
             elif self.FlwExchange == 'HuoBi':
@@ -62,7 +62,7 @@ class KlineTrader(OrderBooker):
                     raise Exception(self.tradesymbol + ' 得到目标价错误')
 
                 # 昨天的收盘价作为今天基准价
-                open_price = self.tc.get_base_price(symbol=self.tradesymbol, period=self.period)
+                open_price = self.wrapper.get_base_price(symbol=self.tradesymbol, period=self.period)
                 return (float(open_price) * (1 + self.FlwMul * T_rate)) , volume
             else:
                 raise Exception("未知交易所 FlwExchange : {0}".format(self.FlwExchange))
@@ -82,7 +82,7 @@ class KlineTrader(OrderBooker):
             volume_next = 10.
 
         #获取最新成交价
-        current_price = self.tc.get_latest_price(self.tradesymbol)
+        current_price = self.wrapper.get_latest_price(self.tradesymbol)
 
         # Logging.info(tradesymbol+' current_price:{}'.format(current_price))
         print(self.tradesymbol + ' current_price:{}'.format(current_price))
@@ -167,7 +167,7 @@ class KlineTrader(OrderBooker):
                     # 反手单加量的时候，撤单
                     if L[-1][1] / R[0][1] > 1.001:
                         time.sleep(1)
-                        self.tc.cancel_orders(self.tradesymbol, ret)
+                        self.wrapper.cancel_orders(self.tradesymbol, ret)
                 elif side == TakingSide.DOWN and R != [] and L != []:
                     # 向下吃单
 
@@ -180,7 +180,7 @@ class KlineTrader(OrderBooker):
 
                     if L[-1][1] / R[0][1] > 1.001:
                         time.sleep(1)
-                        self.tc.cancel_orders(self.tradesymbol, ret)
+                        self.wrapper.cancel_orders(self.tradesymbol, ret)
                 else:
                     raise Exception("invalid side {}".format(side))
             except Exception as e:
