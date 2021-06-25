@@ -159,14 +159,14 @@ class OrderBooker:
         return buyorderlist, sellorderlist
 
 
-    def cancel_timeout_orders(self, ord_lifetime_secs: int, per_op_delay: float, page_size: int=100):
+    def cancel_timeout_orders(self, ord_lifetime_secs: int, per_op_delay: float, page_size: int=200):
         o_ids = []
         nowtime = int(time.time())
         assert isinstance(self.wrapper, BioneWrapper), 'tc is not  BioneWrapper'
         orders = self.wrapper.get_orders(self.tradesymbol, page_size=page_size)
         # print("订单笔数: {}".format( len(orders)) )
 
-        min_orders = 30
+        min_orders = 100
         if len(orders) < min_orders:
             print('挂单笔数小于{}, 暂时不撤单'.format(min_orders))
             return
