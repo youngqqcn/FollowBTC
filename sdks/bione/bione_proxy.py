@@ -14,6 +14,7 @@ from pprint import pprint
 from os.path import dirname
 sys.path.insert(0, dirname(os.path.abspath(__file__)))
 from urllib.parse import urlencode
+import json
 
 
 class BioneProxy:
@@ -79,7 +80,7 @@ class BioneProxy:
         data = json.dumps(params, sort_keys=True, separators=(',', ':'))
         sign_msg = str(timestamp)+'POST' + api_uri + data
         sig = hmac.new(self.skey, msg=sign_msg.encode(), digestmod=hashlib.sha256)
-        print(sig.hexdigest())
+        # print(sig.hexdigest())
 
         headers = {
             'X-CH-APIKEY': '{}'.format(self.akey),
@@ -117,7 +118,7 @@ class BioneProxy:
         }
 
         url = self.API_RUL + api_uri + '?' + query_str
-        print(url)
+        # print(url)
 
         rsp = self.direct_http_get(url, params=None, timeout=timeout, headers=headers)
         # print(rsp)
@@ -128,7 +129,7 @@ class BioneProxy:
     # OK
     def get_ticker(self, symbol, timeout=10):
         url = self.API_RUL + self.URI_TICKER + '?symbol=' + symbol
-        print(url)
+        # print(url)
 
         ret = self.direct_http_get(url, timeout=timeout)
         return ret
@@ -142,6 +143,7 @@ class BioneProxy:
         """
         p = {'symbol': symbol, 'interval': interval, 'limit':limit}
         ret = self._api_key_get(p, self.URI_KLINES, timeout)
+        # print("ret===>{}".format(ret))
         return ret
 
 
@@ -228,8 +230,9 @@ if __name__ == '__main__':
     # pprint(kline)
 
 
-    # orders = bione.get_cur_orders(symbol='BTCUSDT' )
-    # print(orders)
+    orders = bione.get_cur_orders(symbol='HTDFUSDT' )
+    print(orders['list'])
+    print(len(orders['list']))
     #
     # ticker = bione.get_ticker(symbol='BTCUSDT')
     # pprint(ticker)

@@ -7,7 +7,9 @@
 
 
 import random
-import numpy as np 
+import traceback
+
+import numpy as np
 import time
 import copy
 from .header_ex_api import OKEX, HuoBi
@@ -185,6 +187,7 @@ class KlineTrader(OrderBooker):
                     raise Exception("invalid side {}".format(side))
             except Exception as e:
                 print('trade_loop error: {}'.format(e))
+                traceback.print_exc()
 
             time.sleep(per_loop_interval_secs)
 

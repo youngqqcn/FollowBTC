@@ -116,8 +116,20 @@ class BioneWrapper(object):
 
 
     def get_latest_price(self, symbol):
+        """
+        ticker 响应内容
+        {
+            "high": "9279.0301",
+            "vol": "1302",
+            "last": "9200",
+            "low": "9279.0301",
+            "rose": "0",
+            "time": 1595563624731
+        }
+
+        """
         ticker = self.proxy.get_ticker(symbol)
-        return ticker
+        return float(ticker['last'])
 
 
     def get_order_info(self, symbol, id):
@@ -126,7 +138,7 @@ class BioneWrapper(object):
 
     def get_orders(self, symbol, page_size=100):
         orders = self.proxy.get_cur_orders(symbol, limit=page_size)
-        return orders
+        return orders['list']
 
 
     def cancel_order(self, symbol, id):

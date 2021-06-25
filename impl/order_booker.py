@@ -17,6 +17,7 @@ from sdks.bione import BioneWrapper
 from utils import round_down_float_all
 from concurrent.futures import ProcessPoolExecutor,  ALL_COMPLETED
 
+import traceback
 
 
 class TradeSide:
@@ -83,6 +84,7 @@ class OrderBooker:
                 ret.append(o_b)
             except Exception as e:
                 print('下单错误:{}, order:{}'.format(e, ord))
+                traceback.print_exc()
                 pass
             time.sleep(dealy)
         print('成功下{}单, {}笔'.format(side, len(orders)))
@@ -118,6 +120,8 @@ class OrderBooker:
         except Exception as e:
             # Logging.info(tradesymbol+' 得到目标价错误:{}'.format(e))
             print('得到目标价错误: {}'.format(e))
+            traceback.print_exc()
+
             raise e
             # return -1
 
@@ -162,21 +166,22 @@ class OrderBooker:
         orders = self.wrapper.get_orders(self.tradesymbol, page_size=page_size)
         # print("订单笔数: {}".format( len(orders)) )
 
-        if len(orders) < 50:
-            print('挂单笔数小于50, 暂时不撤单')
+        min_orders = 30
+        if len(orders) < min_orders:
+            print('挂单笔数小于{}, 暂时不撤单'.format(min_orders))
             return
 
         random.shuffle(orders)
         this_symbol_orders = []
         for order in orders:
-            order_symbol = str(order['baseCoin'].strip() + order['countCoin'].strip()).lower()
-            o_time = int(int(order['created_at']) / 1000)
+            # order_symbol = order['symbol']  # str(order['baseCoin'].strip() + order['countCoin'].strip()).lower()
+            o_time = int(int(order['time']) / 1000)
             if nowtime - o_time < ord_lifetime_secs: 
                 print('{} - {} < {}, 跳过这笔订单'.format(nowtime, o_time, ord_lifetime_secs))
                 continue
-            if order_symbol != self.tradesymbol:
-                print('交易对不匹配{} != {}'.format(order_symbol, self.tradesymbol))
-                continue
+            # if order_symbol != self.tradesymbol:
+            #     print('交易对不匹配{} != {}'.format(order_symbol, self.tradesymbol))
+            #     continue
             this_symbol_orders.append(order)
         print("准备撤单:{}笔".format(len(this_symbol_orders)))
 
@@ -184,7 +189,7 @@ class OrderBooker:
         count = 0
         failed_count = 0
         for i in range(len(this_symbol_orders)):
-            order_id = this_symbol_orders[i]['id']
+            order_id = this_symbol_orders[i]['orderId']
             try:
                 rsp = self.wrapper.cancel_order(self.tradesymbol, order_id)
                 logging.info("撤单结果：{}\n撤单信息：{}".format(rsp, order_id))
@@ -207,6 +212,7 @@ class OrderBooker:
             except Exception as e:
                 # Logging.exception('执行撤单错误:{}'.format(e))
                 print('执行撤单错误:{}'.format(e))
+                traceback.print_exc()
             time.sleep( per_loop_delay )
 
 
@@ -237,6 +243,7 @@ class OrderBooker:
             except Exception as e:
                 # Logging.exception('执行下单错误:{}'.format(e))
                 print('执行下单错误:{}'.format(e))
+                traceback.print_exc()
                 pass
 
             time.sleep(per_loop_interval_secs)
