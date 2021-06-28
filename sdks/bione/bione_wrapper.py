@@ -62,12 +62,12 @@ class BioneWrapper(object):
         #     raise Exception("unknown period {}".format(period))
         #
         #
-        # time_today_00_00_00 = int(time.mktime(datetime.date.today().timetuple()))
+        time_today_00_00_00 = int(time.mktime(datetime.date.today().timetuple()))
         # time_yesterday_23_59_00 = time_today_00_00_00 - 60
-        # secs = int(time.time()) - time_today_00_00_00
-        # sleep_secs = 10
-        # if period == 24 * 60 and 0 < secs < 60 and  sleep_secs >= secs:
-        #     time.sleep((sleep_secs - int(secs)) % (sleep_secs + 1))
+        secs = int(time.time()) - time_today_00_00_00
+        sleep_secs = 20
+        if period == 24 * 60 and 0 < secs < 60 and  sleep_secs >= secs:
+            time.sleep((sleep_secs - int(secs)) % (sleep_secs + 1))
 
         kline = self.proxy.get_kline(symbol=symbol, interval=period)
         # kline = kline['data']
