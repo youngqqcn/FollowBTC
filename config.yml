@@ -45,20 +45,21 @@ HTDF/USDT:
   huge_quantity_order: 50000   # 巨量单阈值，单位是金额（USDP）
   alarm_sleep_time: 600    # 监控每轮睡眠时间，单位秒
 
+  min_orders_uncancel: 30  # orderbook, 如果总挂单笔数小于此值, 则不再撤单
   orderbook:
     IsOpen: 1                                          #是否打开挂单功能 1为是 0为否
-    delay: 0.5                                           #铺单撤单间隔
-    order_amount_min: 50 #150                                 #最小下单量
-    order_amount_max: 200 #400                               #最大下单量
+    delay: 0.2                                           #铺单撤单间隔
+    order_amount_min: 10 #150                                 #最小下单量
+    order_amount_max: 80 #400                               #最大下单量
     Rg: 0.07                                            #挂单价格范围
     ordernum: 30                                         #挂单数量
     akey: 'bf1d0ab922e59da3d17832270fc6f943'            #公钥
     skey: '45d38dc317e7b55bb7847ab54bf96011'            #私钥
   klinetrend:
     IsOpen: 1                                        #是否打开跟随走势功能 1为是 0为否
-    order_amount_min: 50 #150                              #最小下单量
-    order_amount_max: 200 #500                             #最大下单量
-    delay: 0.5                                         #吃单间隔
+    order_amount_min: 10 #150                              #最小下单量
+    order_amount_max: 80 #500                             #最大下单量
+    delay: 0.2                                         #吃单间隔
     amountmul: 2                                    #当当前涨跌幅与目标涨跌幅相差一定的时候，数量倍数系数
     rt: 0.1                                          #当当前涨跌幅与目标涨跌幅相差这个数的时候，数量倍数系数
     order_num_min: 10                                 #最小下单笔数

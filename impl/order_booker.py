@@ -58,6 +58,7 @@ class OrderBooker:
         self.phone_numbers = conf[symbol]['phone_number']
         self.phone_text_tpl_id = conf[symbol]['phone_text_tpl_id']
         self.phone_text_key = conf[symbol]['phone_text_key']
+        self.min_orders_uncancel = conf[symbol]['min_orders_uncancel']
 
         self.wrapper = BioneWrapper(akey=self.akey, skey=self.skey)
 
@@ -166,9 +167,8 @@ class OrderBooker:
         orders = self.wrapper.get_orders(self.tradesymbol, page_size=page_size)
         # print("订单笔数: {}".format( len(orders)) )
 
-        min_orders = 100
-        if len(orders) < min_orders:
-            print('挂单笔数小于{}, 暂时不撤单'.format(min_orders))
+        if len(orders) < self.min_orders_uncancel:
+            print('挂单笔数小于{}, 暂时不撤单'.format(self.min_orders_uncancel))
             return
 
         random.shuffle(orders)
