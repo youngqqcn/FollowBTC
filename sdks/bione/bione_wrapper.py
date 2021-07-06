@@ -63,11 +63,11 @@ class BioneWrapper(object):
         #
         #
         time_today_00_00_00 = int(time.mktime(datetime.date.today().timetuple()))
-        # time_yesterday_23_59_00 = time_today_00_00_00 - 60
-        secs = int(time.time()) - time_today_00_00_00
-        sleep_secs = 20
-        if period == 24 * 60 and 0 < secs < 60 and  sleep_secs >= secs:
-            time.sleep((sleep_secs - int(secs)) % (sleep_secs + 1))
+        now  = int(time.time())
+        if (23*60*60 + 59*60 <=  (now - time_today_00_00_00) <= 24*60*60)\
+                or ( 0 <= (now - time_today_00_00_00) <= 1*60 ):
+            time.sleep(128)
+            raise Exception("为了保证K线的正确, 23:59:00 ~ 00:01:00 之间不进行交易")
 
         kline = self.proxy.get_kline(symbol=symbol, interval=period)
         # kline = kline['data']
