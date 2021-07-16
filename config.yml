@@ -45,7 +45,8 @@ HTDF/USDT:
   huge_quantity_order: 50000   # 巨量单阈值，单位是金额（USDP）
   alarm_sleep_time: 600    # 监控每轮睡眠时间，单位秒
 
-  min_orders_uncancel: 150  # orderbook, 如果总挂单笔数小于此值, 则不再撤单
+  min_orders_uncancel: 100  # orderbook, 如果总挂单笔数小于此值, 则不再撤单
+  max_order_live_time: 300  # 防止卡住
   orderbook:
     IsOpen: 1                                          #是否打开挂单功能 1为是 0为否
     delay: 0.2                                           #铺单撤单间隔
