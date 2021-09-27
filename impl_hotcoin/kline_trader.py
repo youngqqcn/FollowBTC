@@ -12,6 +12,7 @@ import copy
 from .header_ex_api import OKEX, HuoBi
 from utils import round_down_float_all
 from .order_booker import OrderBooker, TradeSide
+import traceback
 
 
 
@@ -78,8 +79,10 @@ class KlineTrader(OrderBooker):
         print('目标价: {} , 目标成交量: {}'.format(tarprice, tar_volume))
         target_price = tarprice
         volume_next = self.FlwVolMul * tar_volume
-        if volume_next < 10.:
-            volume_next = 10.
+        if volume_next < self.order_amount_min :
+            volume_next = self.order_amount_min 
+        #elif volume_next > self.order_amount_max:
+        #    volume_next = self.order_amount_max 
 
         #获取最新成交价
         current_price = self.tc.get_latest_price(self.tradesymbol)
@@ -99,14 +102,14 @@ class KlineTrader(OrderBooker):
         if target_price >= current_price:
             # Logging.info(tradesymbol+' 目标价大于或等于基本价')
             # 得到下单笔数 num + 1（targetprice）
-            num = random.randint(self.order_num_min - 1, self.order_num_max - 1)
+            num = random.randint(self.order_num_min , self.order_num_max )
             # 得到下单价列表
             pricelist = np.random.uniform(target_price * 0.999, target_price, num)
             pricelist1 = list(pricelist) + [target_price]
             pricelist1 = sorted(round_down_float_all(pricelist1, self.PricePrecision))
 
             # 得到下单数量列表
-            amountlist = np.random.uniform(volume_next * 0.8, volume_next * 1.2, num + 1)
+            amountlist = np.random.uniform(volume_next * 1.1, volume_next * 1.2, num + 1)
             # Logging.info(tradesymbol+' 原始数量{}'.format(amountlist))
             amountlist_L = copy.deepcopy(amountlist)
 
@@ -131,7 +134,7 @@ class KlineTrader(OrderBooker):
             pricelist1 = sorted(round_down_float_all(pricelist1, self.PricePrecision), reverse=True)
 
             # 得到下单数量列表
-            amountlist = np.random.uniform(volume_next * 0.8, volume_next * 1.2, num + 1)
+            amountlist = np.random.uniform(volume_next * 1.1, volume_next * 1.2, num + 1)
             # Logging.info(tradesymbol+" 原始数量{}".format(amountlist))
             amountlist_L = copy.deepcopy(amountlist)
 
@@ -185,6 +188,8 @@ class KlineTrader(OrderBooker):
                     raise Exception("invalid side {}".format(side))
             except Exception as e:
                 print('trade_loop error: {}'.format(e))
+                traceback.print_exc()
+
 
             time.sleep(per_loop_interval_secs)
 

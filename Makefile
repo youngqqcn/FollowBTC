@@ -18,19 +18,19 @@ endif
 
 start:clean
 	@echo "loading service......"
-	@nohup python3 -u bione_kline_trader_main.py > all_prints.log 2>&1 &
-	@nohup python3 -u bione_order_book_main.py > all_prints.log 2>&1 &
+	@nohup python3 -u hotcoin_kline_trader_main.py > all_prints.log 2>&1 &
+	@nohup python3 -u hotcoin_order_book_main.py > all_prints.log 2>&1 &
 	@sleep 3s
-	@echo "bione_kline_trader_main 进程数(包含子进程):"  $$(ps aux | grep '[p]ython3 -u bione_kline_trader_main.py'  | wc -l)
-	@echo "bione_order_book_main 进程数(包含子进程):"  $$(ps aux | grep '[p]ython3 -u bione_order_book_main.py'  | wc -l)
+	@echo "hotcoin_kline_trader_main 进程数(包含子进程):"  $$(ps aux | grep '[p]ython3 -u hotcoin_kline_trader_main.py'  | wc -l)
+	@echo "hotcoin_order_book_main 进程数(包含子进程):"  $$(ps aux | grep '[p]ython3 -u hotcoin_order_book_main.py'  | wc -l)
 
 
 #要先杀子进程
 stop:
-	@kill -9  $$(ps aux | grep '[p]ython3 -u bione_kline_trader_main.py' | awk '{print $$2}')
-	@echo "bione_kline_trader_main stoped"
-	@kill -9  $$(ps aux | grep '[p]ython3 -u bione_order_book_main.py' | awk '{print $$2}')
-	@echo "bione_order_book_main stoped"
+	@kill -9  $$(ps aux | grep '[p]ython3 -u hotcoin_kline_trader_main.py' | awk '{print $$2}')
+	@echo "hotcoin_kline_trader_main stoped"
+	@kill -9  $$(ps aux | grep '[p]ython3 -u hotcoin_order_book_main.py' | awk '{print $$2}')
+	@echo "hotcoin_order_book_main stoped"
 
 
 clean:

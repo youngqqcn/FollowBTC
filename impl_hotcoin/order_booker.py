@@ -13,11 +13,11 @@ from multiprocessing import Process, cpu_count
 
 from impl.header_ex_api import HuoBi, OKEX
 from impl.sms import juhe_cn_send_sms
+from sdks.hotcoin import HotcoinWrapper
 from sdks.tokencan import TokenCanWrapper
 from utils import round_down_float_all
 from concurrent.futures import ProcessPoolExecutor,  ALL_COMPLETED
-
-
+import traceback
 
 class TradeSide:
     BUY = 'BUY'
@@ -58,7 +58,7 @@ class OrderBooker:
         self.phone_text_tpl_id = conf[symbol]['phone_text_tpl_id']
         self.phone_text_key = conf[symbol]['phone_text_key']
 
-        self.tc = TokenCanWrapper(akey=self.akey, skey=self.skey)
+        self.tc = HotcoinWrapper(akey=self.akey, skey=self.skey)
 
         self.hb = HuoBi()
         self.okex = OKEX()
@@ -81,6 +81,7 @@ class OrderBooker:
                 ret.append(o_b)
             except Exception as e:
                 print('下单错误:{}, order:{}'.format(e, ord))
+                traceback.print_exc()
                 pass
             time.sleep(dealy)
         print('成功下{}单, {}笔'.format(side, len(orders)))
@@ -145,6 +146,7 @@ class OrderBooker:
         sprice = np.random.uniform(nowprice, maxprice, self.ordernum)
         sellpricelist = round_down_float_all(list(sprice), self.PricePrecision)
         # 得到数量列表
+        print("=========> order_amount_min:{} order_amount_max:{}".format(self.order_amount_min, self.order_amount_max))
         samount = np.random.uniform(self.order_amount_min, self.order_amount_max, self.ordernum)
         sellamountlist = round_down_float_all(list(samount), self.amount_precision)
 
@@ -156,7 +158,7 @@ class OrderBooker:
     def cancel_timeout_orders(self, ord_lifetime_secs: int, per_op_delay: float, page_size: int=100):
         o_ids = []
         nowtime = int(time.time())
-        assert isinstance(self.tc, TokenCanWrapper), 'tc is not  TokenCanWrapper'
+        assert isinstance(self.tc, HotcoinWrapper), 'tc is not  HotcoinWrapper'
         orders = self.tc.get_orders(self.tradesymbol, page_size=page_size)
         # print("订单笔数: {}".format( len(orders)) )
 
@@ -167,8 +169,10 @@ class OrderBooker:
         random.shuffle(orders)
         this_symbol_orders = []
         for order in orders:
-            order_symbol = str(order['baseCoin'].strip() + order['countCoin'].strip()).lower()
-            o_time = int(int(order['created_at']) / 1000)
+            order_symbol = str(order['sellsymbol'].strip() + '_' + order['buysymbol'].strip()).lower()
+
+            t = time.strptime(order['time'], '%Y-%m-%d %H:%M:%S')
+            o_time = int(time.mktime(t))
             if nowtime - o_time < ord_lifetime_secs: 
                 print('{} - {} < {}, 跳过这笔订单'.format(nowtime, o_time, ord_lifetime_secs))
                 continue
@@ -231,7 +235,7 @@ class OrderBooker:
                     if not f.done():
                         f.cancel()
 
-                self.cancel_timeout_orders(60, 1, 160)
+                self.cancel_timeout_orders(60, 1, 100)
             except Exception as e:
                 # Logging.exception('执行下单错误:{}'.format(e))
                 print('执行下单错误:{}'.format(e))
@@ -292,8 +296,8 @@ class OrderBooker:
         """
 
         # 撤销所有订单
-        self.tc.cancel_all_orders( symbol=self.tradesymbol )
-        return
+        #self.tc.cancel_all_orders( symbol=self.tradesymbol )
+        #return
 
 
         # 撤单进程
@@ -301,20 +305,21 @@ class OrderBooker:
                                  kwargs={'ord_lifetime_secs': 60,
                                          'per_op_delay': 0.5,
                                          'per_loop_delay':10})
-
+        
         cancel_process.daemon = True  #主进程退出, 子进程自动退出
         cancel_process.start()
 
 
         #监控机器人 HTDF  USDT 余额, 每隔一个小时发一次短信
-        sms_balance_monitor_process = Process(target=self.monitor_balance_loop)
-        sms_balance_monitor_process.daemon = True
-        sms_balance_monitor_process.start()
+        # sms_balance_monitor_process = Process(target=self.monitor_balance_loop)
+        # sms_balance_monitor_process.daemon = True
+        # sms_balance_monitor_process.start()
 
 
         #在主进程中进行创建子进程
         self.trade_loop( per_loop_interval_secs=10)
-        cancel_process.join()
+        #cancel_process.join()
+	
 
 
 
