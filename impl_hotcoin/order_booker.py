@@ -57,6 +57,8 @@ class OrderBooker:
         self.phone_numbers = conf[symbol]['phone_number']
         self.phone_text_tpl_id = conf[symbol]['phone_text_tpl_id']
         self.phone_text_key = conf[symbol]['phone_text_key']
+        self.min_orders_uncancel = conf[symbol]['min_orders_uncancel']
+        self.max_order_live_time = conf[symbol]['max_order_live_time']
 
         self.tc = HotcoinWrapper(akey=self.akey, skey=self.skey)
 
@@ -162,9 +164,12 @@ class OrderBooker:
         orders = self.tc.get_orders(self.tradesymbol, page_size=page_size)
         # print("订单笔数: {}".format( len(orders)) )
 
-        if len(orders) < 50:
-            print('挂单笔数小于50, 暂时不撤单')
-            return
+        if len(orders) < self.min_orders_uncancel:
+            if nowtime - int(int(orders[0]['time']) / 1000) < self.max_order_live_time:
+                print('挂单笔数小于{}, 暂时不撤单'.format(self.min_orders_uncancel))
+                return
+            else:
+                orders = orders[:10]  # 只撤最老10笔单
 
         random.shuffle(orders)
         this_symbol_orders = []
