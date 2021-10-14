@@ -221,6 +221,16 @@ class OrderBooker:
         proc_executor = ProcessPoolExecutor(max_workers=2) #一个进程铺卖单, 一个进程铺买单
         while True:
             try:
+                balances = self.tc.tc.query_balance()
+                for coin in balances:
+                    if coin['symbol'] == 'USDT' or coin['symbol'] == 'HTDF':
+                        print(coin)
+            except:
+                print('get balance failed')
+                pass
+
+            try:
+
                 buyorderlist, sellorderlist =  self.make_orders()
 
 
