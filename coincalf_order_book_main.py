@@ -1,13 +1,14 @@
 #!coding:utf8
 
-#author:yqq
-#date:2020/9/17 0017 18:18
-#description:  铺单
+# author:yqq
+# date:2020/9/17 0017 18:18
+# description:  铺单
 # from impl import OrderBooker
 from impl import OrderBooker
 
+
 def main():
-    ob = OrderBooker(config_path='./config.yml', symbol='HTDF/USDT')
+    ob = OrderBooker(config_path='./config.yml', symbol='NFCUSDT')
     ob.startloop()
     pass
 

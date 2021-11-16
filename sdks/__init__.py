@@ -1,1 +1,1 @@
-__all__ = ['tokencan', 'hotcoin']
+__all__ = ['coincalf']

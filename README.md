@@ -1,4 +1,4 @@
-# Tokencan(T网)HTDF交易机器人
+# NFC交易机器人
 
 ## 跟随策略
  跟随火币BTC涨跌幅
@@ -17,7 +17,7 @@
 
 ## 安装依赖
 
-`pip3 install requirements.txt `
+`pip3 install -r requirements.txt `
 
 
 ## 运行

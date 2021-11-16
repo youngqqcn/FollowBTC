@@ -4,13 +4,10 @@
 #date:2020/9/17 0017 18:37
 #description:
 
-import requests,urllib
+import requests
 import json
 import logging
-
 import sys
-import time
-from os.path import dirname
 
 Logging = logging.getLogger()
 
@@ -19,11 +16,11 @@ __all__ = ['OKEX', 'HuoBi']
 
 OK_API_URL = 'https://www.okex.com'
 
-if sys.platform == 'win32':  #国内
-    HUOBI_API_URL = "https://api.huobi.me"
+if sys.platform == 'win32':  # 国内
+    HUOBI_API_URL = "https://api.huobi.pro"  # 翻墙可以
 else:
     HUOBI_API_URL = "https://api.huobi.pro"
-BN_API_URL ='https://api.binance.com'
+BN_API_URL = 'https://api.binance.com'
 ZB_API_URL = 'http://api.zb.cn/data/v1/kline?market=btc_usdt'
 
 #K线类型1m ,5m,15m, 30m, 1h, 4h, day, week

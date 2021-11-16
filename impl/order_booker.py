@@ -1,10 +1,10 @@
 #!coding:utf8
 
-#author:yqq
-#date:2020/9/17 0017 18:37
-#description:
+# author:yqq
+# date:2020/9/17 0017 18:37
+# description:
 import datetime
-import random,time
+import random, time
 import numpy as np
 from concurrent import futures
 import logging
@@ -13,17 +13,19 @@ from multiprocessing import Process, cpu_count
 
 from impl.header_ex_api import HuoBi, OKEX
 from impl.sms import juhe_cn_send_sms
-from sdks.hotcoin import HotcoinWrapper
+from sdks.coincalf import CoincalfWrapper
 from utils import round_down_float_all
-from concurrent.futures import ProcessPoolExecutor,  ALL_COMPLETED
+from concurrent.futures import ProcessPoolExecutor, ALL_COMPLETED
 import traceback
+
 
 class TradeSide:
     BUY = 'BUY'
     SELL = 'SELL'
 
+
 class OrderBooker:
-    def __init__(self, config_path : str, symbol: str):
+    def __init__(self, config_path: str, symbol: str):
         # # 读取配置文件
 
         with open(config_path, 'r', encoding='UTF-8') as f:
@@ -52,6 +54,7 @@ class OrderBooker:
 
         self.akey = conf[symbol]['orderbook']['akey']
         self.skey = conf[symbol]['orderbook']['skey']
+        self.coincalf_token = conf[symbol]['orderbook']['token']
 
         self.phone_numbers = conf[symbol]['phone_number']
         self.phone_text_tpl_id = conf[symbol]['phone_text_tpl_id']
@@ -59,35 +62,33 @@ class OrderBooker:
         self.min_orders_uncancel = conf[symbol]['min_orders_uncancel']
         self.max_order_live_time = conf[symbol]['max_order_live_time']
 
-        self.tc = HotcoinWrapper(akey=self.akey, skey=self.skey)
+        self.wrapper = CoincalfWrapper(token=self.coincalf_token, akey=self.akey, skey=self.skey)
 
         self.hb = HuoBi()
         self.okex = OKEX()
 
         pass
 
-
-
     # 依次下单 param 下单方向 下单价格数量列表 下单间隔时间
-    def submit_orders(self, side : str, orders: list, dealy: float):
-        assert  side in [TradeSide.BUY, TradeSide.SELL] , 'side is invalid!!!'
-        if len(orders) == 0: return  []
+    def submit_orders(self, side: str, orders: list, delay: float):
+        assert side in [TradeSide.BUY, TradeSide.SELL], 'side is invalid!!!'
+        if len(orders) == 0:
+            return []
 
         ret = []
-        trade_func =  self.tc.buy_in_limit_price if side == TradeSide.BUY else self.tc.sell_in_limit_price
-        for ord in orders:
+        trade_func = self.wrapper.buy_in_limit_price if side == TradeSide.BUY else self.wrapper.sell_in_limit_price
+        for order in orders:
             try:
-                print('下{}单数据:{}'.format(side, ord))
-                o_b = trade_func(self.tradesymbol, ord[0], ord[1])
+                print('下{}单数据:{}'.format(side, order))
+                o_b = trade_func(self.tradesymbol, order[0], order[1])
                 ret.append(o_b)
             except Exception as e:
-                print('下单错误:{}, order:{}'.format(e, ord))
+                print('下单错误:{}, order:{}'.format(e, order))
                 traceback.print_exc()
                 pass
-            time.sleep(dealy)
+            time.sleep(delay)
         print('成功下{}单, {}笔'.format(side, len(orders)))
         return ret
-
 
     # 得到目标价
     def get_base_price(self):
@@ -98,8 +99,8 @@ class OrderBooker:
                 T_rate = fkline['OK_rate']
                 if T_rate <= -1:
                     # Logging.info(tradesymbol+' 得到目标价错误')
-                    raise Exception(self.tradesymbol+' 得到目标价错误')
-                ticker = self.tc.get_ticker(symbol=self.tradesymbol)
+                    raise Exception(self.tradesymbol + ' 得到目标价错误')
+                ticker = self.wrapper.get_ticker(symbol=self.tradesymbol)
                 nowprice = ticker['last']
                 return (float(nowprice) * (1 + self.FlwMul * T_rate))
             elif self.FlwExchange == 'HuoBi':
@@ -107,10 +108,10 @@ class OrderBooker:
                 T_rate = fkline['HB_rate']
                 if T_rate <= -1:
                     # Logging.info(tradesymbol+' 得到目标价错误')
-                    raise Exception(self.tradesymbol+' 得到目标价错误')
+                    raise Exception(self.tradesymbol + ' 得到目标价错误')
 
                 # 昨天的收盘价作为今天基准价
-                open_price = self.tc.get_base_price(symbol=self.tradesymbol, period=self.period)
+                open_price = self.wrapper.get_base_price(symbol=self.tradesymbol, kline_type=self.period)
                 return (float(open_price) * (1 + self.FlwMul * T_rate))
             else:
                 raise Exception("未知交易所 FlwExchange : {0}".format(self.FlwExchange))
@@ -118,6 +119,7 @@ class OrderBooker:
         except Exception as e:
             # Logging.info(tradesymbol+' 得到目标价错误:{}'.format(e))
             print('得到目标价错误: {}'.format(e))
+            traceback.print_exc()
             raise e
             # return -1
 
@@ -155,15 +157,14 @@ class OrderBooker:
         # Logging.info('Sell下单列表:{}'.format(sellorderlist))
         return buyorderlist, sellorderlist
 
-
-    def cancel_timeout_orders(self, ord_lifetime_secs: int, per_op_delay: float, page_size: int=100):
+    def cancel_timeout_orders(self, ord_lifetime_secs: int, per_op_delay: float, page_size: int = 100):
         nowtime = int(time.time())
-        assert isinstance(self.tc, HotcoinWrapper), 'tc is not  HotcoinWrapper'
-        orders = self.tc.get_orders(self.tradesymbol, page_size=page_size)
+        assert isinstance(self.wrapper, CoincalfWrapper), 'tc is not  HotcoinWrapper'
+        orders = self.wrapper.get_orders(self.tradesymbol, page_size=page_size)
         # print("订单笔数: {}".format( len(orders)) )
 
         if len(orders) < self.min_orders_uncancel:
-            t = time.strptime(orders[0]['time'], '%Y-%m-%d %H:%M:%S')
+            t = time.strptime(orders[0]['created'], '%Y-%m-%d %H:%M:%S')
             o_time = int(time.mktime(t))
             if nowtime - o_time < self.max_order_live_time:
                 print('挂单笔数小于{}, 暂时不撤单'.format(self.min_orders_uncancel))
@@ -174,16 +175,16 @@ class OrderBooker:
         random.shuffle(orders)
         this_symbol_orders = []
         for order in orders:
-            order_symbol = str(order['sellsymbol'].strip() + '_' + order['buysymbol'].strip()).lower()
+            # order_symbol = str(order['sellsymbol'].strip() + '_' + order['buysymbol'].strip()).lower()
 
-            t = time.strptime(order['time'], '%Y-%m-%d %H:%M:%S')
+            t = time.strptime(order['created'], '%Y-%m-%d %H:%M:%S')
             o_time = int(time.mktime(t))
             if nowtime - o_time < ord_lifetime_secs:
                 print('{} - {} < {}, 跳过这笔订单'.format(nowtime, o_time, ord_lifetime_secs))
                 continue
-            if order_symbol != self.tradesymbol:
-                print('交易对不匹配{} != {}'.format(order_symbol, self.tradesymbol))
-                continue
+            # if order_symbol != self.tradesymbol:
+            #     print('交易对不匹配{} != {}'.format(order_symbol, self.tradesymbol))
+            #     continue
             this_symbol_orders.append(order)
         print("准备撤单:{}笔".format(len(this_symbol_orders)))
 
@@ -191,9 +192,9 @@ class OrderBooker:
         count = 0
         failed_count = 0
         for i in range(len(this_symbol_orders)):
-            order_id = this_symbol_orders[i]['id']
+            order_id = this_symbol_orders[i]['orderId']
             try:
-                rsp = self.tc.cancel_order(self.tradesymbol, order_id)
+                rsp = self.wrapper.cancel_order(order_id)
                 logging.info("撤单结果：{}\n撤单信息：{}".format(rsp, order_id))
                 time.sleep(per_op_delay)
                 count += 1
@@ -202,7 +203,6 @@ class OrderBooker:
                 failed_count += 1
 
         print('成功撤单:{} 笔, 失败 {}'.format(count, failed_count))
-
 
     # 撤销超时未成交订单
     def cancel_timeout_orders_loop(self, ord_lifetime_secs: int = 60,
@@ -214,36 +214,34 @@ class OrderBooker:
             except Exception as e:
                 # Logging.exception('执行撤单错误:{}'.format(e))
                 print('执行撤单错误:{}'.format(e))
-            time.sleep( per_loop_delay )
-
+                traceback.print_exc()
+            time.sleep(per_loop_delay)
 
     def trade_loop(self, per_loop_interval_secs: float = 5.0):
-        proc_executor = ProcessPoolExecutor(max_workers=2) #一个进程铺卖单, 一个进程铺买单
+        proc_executor = ProcessPoolExecutor(max_workers=2)  # 一个进程铺卖单, 一个进程铺买单
         while True:
-            try:
-                balances = self.tc.tc.query_balance()
-                for coin in balances:
-                    if coin['symbol'] == 'USDT' or coin['symbol'] == 'HTDF':
-                        print(coin)
-            except:
-                print('get balance failed')
-                pass
+            # try:
+            #     balances = self.tc.proxy.query_balance()
+            #     for coin in balances:
+            #         if coin['symbol'] == 'USDT' or coin['symbol'] == 'HTDF':
+            #             print(coin)
+            # except Exception as e:
+            #     print('get balance failed {}', e )
+            #     pass
 
             try:
 
-                buyorderlist, sellorderlist =  self.make_orders()
-
+                buy_orders_list, sell_orders_list = self.make_orders()
 
                 fs = []
-                future_buy = proc_executor.submit(self.submit_orders, TradeSide.BUY, buyorderlist, self.delay)
+                future_buy = proc_executor.submit(self.submit_orders, TradeSide.BUY, buy_orders_list, self.delay)
                 fs.append(future_buy)
 
-                future_sell = proc_executor.submit(self.submit_orders, TradeSide.SELL, sellorderlist, self.delay)
+                future_sell = proc_executor.submit(self.submit_orders, TradeSide.SELL, sell_orders_list, self.delay)
                 fs.append(future_sell)
 
-
-                #future_cancel = proc_executor.submit(self.cancel_timeout_orders_loop, 60,  1, 10)
-                #fs.append(future_cancel)
+                # future_cancel = proc_executor.submit(self.cancel_timeout_orders_loop, 60,  1, 10)
+                # fs.append(future_cancel)
 
                 futures.wait(fs=fs, timeout=50, return_when=ALL_COMPLETED)
                 for f in fs:
@@ -254,55 +252,56 @@ class OrderBooker:
             except Exception as e:
                 # Logging.exception('执行下单错误:{}'.format(e))
                 print('执行下单错误:{}'.format(e))
+                traceback.print_exc()
                 pass
 
             time.sleep(per_loop_interval_secs)
 
-
-    def monitor_balance_loop(self):
-        last_sms_time = 0
-        while True:
-            try:
-                now = datetime.datetime.now()
-                is_timed = (now.hour == 10 and now.minute == 0) or (now.hour == 22 and now.minute == 0)
-                if not is_timed:  # 上午10点, 晚上22点
-                    time.sleep(20)
-                    continue
-
-                if isinstance(last_sms_time, datetime.datetime):
-                    d = now - last_sms_time
-                    if d.seconds < 120:  #整点时发短信频率间隔两分钟以上, 防止到点时发送多条短信
-                        time.sleep(5)
-                        continue
-
-                last_sms_time = 0
-                balances = self.tc.get_account_balance(symbols=['htdf', 'usdt'])
-                assert len(balances) == 2, 'balances length is not equals 2'
-
-                htdf_normal_balance = int(float(balances['htdf']['normal']))
-                htdf_locked_balance = int(float(balances['htdf']['locked']))
-                usdt_normal_balance = int(float(balances['usdt']['normal']))
-                usdt_locked_balance = int(float(balances['usdt']['locked']))
-
-                params = {
-                    "mobile": self.phone_numbers,
-                    "tpl_id": self.phone_text_tpl_id,
-                    "key": self.phone_text_key
-                }
-                name = '\n【{} 资金监控】\n'.format('T網机器人')
-                content = 'H普通余额为{}，冻结余额为{}；U普通余额为{}，冻结余额为{}，{}。' \
-                    .format(htdf_normal_balance, htdf_locked_balance,
-                            usdt_normal_balance, usdt_locked_balance, datetime.datetime.now())
-                params['tpl_value'] = "#name#={}&#content#={}".format(name, content)
-                juhe_cn_send_sms(msg=params)
-
-                last_sms_time = datetime.datetime.now()
-
-            except Exception as e:
-                print('monitor_balance_loop: {}'.format(e))
-
-            # time.sleep(12 * 60 * 60)
-            pass
+    # TODO: 暂时不监控账户余额，如有需要再开启
+    # def monitor_balance_loop(self):
+    #     last_sms_time = 0
+    #     while True:
+    #         try:
+    #             now = datetime.datetime.now()
+    #             is_timed = (now.hour == 10 and now.minute == 0) or (now.hour == 22 and now.minute == 0)
+    #             if not is_timed:  # 上午10点, 晚上22点
+    #                 time.sleep(20)
+    #                 continue
+    #
+    #             if isinstance(last_sms_time, datetime.datetime):
+    #                 d = now - last_sms_time
+    #                 if d.seconds < 120:  # 整点时发短信频率间隔两分钟以上, 防止到点时发送多条短信
+    #                     time.sleep(5)
+    #                     continue
+    #
+    #             last_sms_time = 0
+    #             balances = self.tc.get_account_balance(symbols=['htdf', 'usdt'])
+    #             assert len(balances) == 2, 'balances length is not equals 2'
+    #
+    #             htdf_normal_balance = int(float(balances['htdf']['normal']))
+    #             htdf_locked_balance = int(float(balances['htdf']['locked']))
+    #             usdt_normal_balance = int(float(balances['usdt']['normal']))
+    #             usdt_locked_balance = int(float(balances['usdt']['locked']))
+    #
+    #             params = {
+    #                 "mobile": self.phone_numbers,
+    #                 "tpl_id": self.phone_text_tpl_id,
+    #                 "key": self.phone_text_key
+    #             }
+    #             name = '\n【{} 资金监控】\n'.format('T網机器人')
+    #             content = 'H普通余额为{}，冻结余额为{}；U普通余额为{}，冻结余额为{}，{}。' \
+    #                 .format(htdf_normal_balance, htdf_locked_balance,
+    #                         usdt_normal_balance, usdt_locked_balance, datetime.datetime.now())
+    #             params['tpl_value'] = "#name#={}&#content#={}".format(name, content)
+    #             juhe_cn_send_sms(msg=params)
+    #
+    #             last_sms_time = datetime.datetime.now()
+    #
+    #         except Exception as e:
+    #             print('monitor_balance_loop: {}'.format(e))
+    #
+    #         # time.sleep(12 * 60 * 60)
+    #         pass
 
     def startloop(self):
         """
@@ -311,36 +310,31 @@ class OrderBooker:
         """
 
         # 撤销所有订单
-        #self.tc.cancel_all_orders( symbol=self.tradesymbol )
-        #return
-
+        # self.tc.cancel_all_orders( symbol=self.tradesymbol )
+        # return
 
         # 撤单进程
         cancel_process = Process(target=self.cancel_timeout_orders_loop,
                                  kwargs={'ord_lifetime_secs': 60,
                                          'per_op_delay': 0.5,
-                                         'per_loop_delay':10})
+                                         'per_loop_delay': 10})
 
-        cancel_process.daemon = True  #主进程退出, 子进程自动退出
+        cancel_process.daemon = True  # 主进程退出, 子进程自动退出
         cancel_process.start()
 
-
-        #监控机器人 HTDF  USDT 余额, 每隔一个小时发一次短信
+        # TODO: 尚未开放用户接口，无法获取用户余额
+        # 监控机器人 HTDF  USDT 余额, 每隔一个小时发一次短信
         # sms_balance_monitor_process = Process(target=self.monitor_balance_loop)
         # sms_balance_monitor_process.daemon = True
         # sms_balance_monitor_process.start()
 
-
-        #在主进程中进行创建子进程
-        self.trade_loop( per_loop_interval_secs=10)
-        #cancel_process.join()
-
-
+        # 在主进程中进行创建子进程
+        self.trade_loop(per_loop_interval_secs=10)
+        # cancel_process.join()
 
 
 if __name__ == '__main__':
-
-    ob = OrderBooker(config_path='../config.yml', symbol='HTDF/USDT')
+    ob = OrderBooker(config_path='../config.yml', symbol='NFCUSDT')
     ob.startloop()
 
     pass
