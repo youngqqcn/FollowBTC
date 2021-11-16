@@ -190,15 +190,15 @@ class CoincalfProxy:
         while cur_page < pages:
             rsp = self.query_current_orders(symbol=symbol, cur_page=cur_page, page_size=page_size)
             cur_page += 1
-            pages = rsp['data']['pages']
-            records = rsp['data']['records']
+            pages = rsp['pages']
+            records = rsp['records']
             for r in records:
                 order_ids.append(r['orderId'])
             pass
 
         for oid in order_ids:
             self.order_cancel(oid=oid)
-        return ret
+        return
 
 
 if __name__ == '__main__':

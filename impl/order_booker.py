@@ -310,7 +310,7 @@ class OrderBooker:
         """
 
         # 撤销所有订单
-        # self.tc.cancel_all_orders( symbol=self.tradesymbol )
+        # self.wrapper.cancel_all_orders(symbol=self.tradesymbol )
         # return
 
         # 撤单进程
