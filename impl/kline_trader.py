@@ -169,7 +169,7 @@ class KlineTrader(OrderBooker):
                     # 反手单加量的时候，撤单
                     if L[-1][1] / R[0][1] > 1.001:
                         time.sleep(1)
-                        self.wrapper.cancel_orders(self.tradesymbol, ret)
+                        self.wrapper.cancel_orders(ret)
                 elif side == TakingSide.DOWN and R != [] and L != []:
                     # 向下吃单
 
@@ -182,7 +182,7 @@ class KlineTrader(OrderBooker):
 
                     if L[-1][1] / R[0][1] > 1.001:
                         time.sleep(1)
-                        self.wrapper.cancel_orders(self.tradesymbol, ret)
+                        self.wrapper.cancel_orders(ret)
                 else:
                     raise Exception("invalid side {}".format(side))
             except Exception as e:

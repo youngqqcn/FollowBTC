@@ -127,10 +127,10 @@ class CoincalfWrapper(object):
         ret = self.proxy.order_cancel(oid)
         return ret
 
-    def cancel_orders(self, symbol, order_ids, delay=0):
+    def cancel_orders(self,  order_ids, delay=0):
         """批量撤单"""
         for oid in order_ids:
-            self.proxy.order_cancel(symbol, oid)
+            self.proxy.order_cancel( oid)
             time.sleep(delay)
 
     def cancel_all_orders(self, symbol):
