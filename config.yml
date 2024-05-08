@@ -24,9 +24,9 @@ HTDF/USDT:
   base_coin_asset_alarm: 0.1
   init_asset_trade_coin: 10000
   init_asset_base_coin: 10000
-  phone_number: '18273664901,18138857721,18565659593'   # 接受信息手机号
+  phone_number: '123456789123'   # 接受信息手机号
   phone_text_tpl_id: '213111'   # 手机短信模板
-  phone_text_key: '315654922d9b6849cdf5e6bb2a23542c'   # 手机短信 APPKEY
+  phone_text_key: 'xxx'   # 手机短信 APPKEY
 #  phone_voice_tpl_id: ''    # 语音提醒模板
   # 监控开关（1打开，0关闭）
   low_volume_trade_alarm: 0   # 低量成交监控
@@ -54,8 +54,8 @@ HTDF/USDT:
     order_amount_max: 400 #400                               #最大下单量
     Rg: 0.07                                            #挂单价格范围
     ordernum: 30                                         #挂单数量
-    akey: 'bf1d0ab922e59da3d17832270fc6f943'            #公钥
-    skey: '45d38dc317e7b55bb7847ab54bf96011'            #私钥
+    akey: 'xxx'            #公钥
+    skey: 'xxx'            #私钥
   klinetrend:
     IsOpen: 1                                        #是否打开跟随走势功能 1为是 0为否
     order_amount_min: 150 #150                              #最小下单量
